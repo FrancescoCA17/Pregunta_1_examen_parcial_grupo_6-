@@ -1,0 +1,7 @@
+status,n,conf_asignada,exactitud_real
+absent,390,0.776,0.856
+neg,46,0.95,1.0
+pos_body,109,0.85,0.734
+pos_concl,106,0.95,0.764
+pos_weak,17,0.7,0.765
+uncertain,28,0.5,0.357
