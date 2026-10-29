@@ -2,6 +2,8 @@
 
 - Vista principal: sagital con supresión de grasa (DP/T2 FS, sensible a líquido).
 - Vista de ablación: coronal con supresión de grasa.
+- Respaldo sin supresión de grasa (sag_nofs / cor_nofs): solo se usa en la
+  extracción para dorados sin serie FS, así la evaluación cubre los 58.
 Se prefieren series 2D (MIN_SLICES..MAX_SLICES cortes); una adquisición 3D
 isotrópica (> MAX_SLICES) solo se usa si el estudio no tiene otra, y en la
 extracción se submuestrea a ~TARGET cortes. Entre varias candidatas se toma la
@@ -12,7 +14,8 @@ import pandas as pd
 from common import META
 
 MIN_SLICES, MAX_SLICES, TARGET = 15, 60, 30
-VIEWS = {"sag_fs": ("Sagittal", 1), "cor_fs": ("Coronal", 1)}
+VIEWS = {"sag_fs": ("Sagittal", 1), "cor_fs": ("Coronal", 1),
+         "sag_nofs": ("Sagittal", 0), "cor_nofs": ("Coronal", 0)}
 
 
 def pick(series, plane, fat_sup):

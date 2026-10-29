@@ -87,7 +87,8 @@ def main():
     assert not out[out.split != "gold_val"].gold.any(), "dorado en entrenamiento"
 
     keep = ["StudyInstanceUID", "split", "lang", "gold", "sag_fs_series", "sag_fs_slices",
-            "sag_fs_is3d", "sag_fs_mb", "cor_fs_series", "cor_fs_slices", "cor_fs_is3d", "cor_fs_mb"]
+            "sag_fs_is3d", "sag_fs_mb", "cor_fs_series", "cor_fs_slices", "cor_fs_is3d", "cor_fs_mb",
+            "sag_nofs_series", "sag_nofs_slices", "cor_nofs_series", "cor_nofs_slices"]
     lab_cols = [c for L in LABELS for c in (L, f"{L}_p", f"{L}_conf", f"{L}_status", f"{L}_gold")]
     out[keep + lab_cols].to_csv(META / "sample_split.csv", index=False)
     (ROOT / "splits").mkdir(exist_ok=True)

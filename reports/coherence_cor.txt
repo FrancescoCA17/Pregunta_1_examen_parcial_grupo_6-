@@ -1,7 +1,7 @@
 === Cobertura
 col_0       con volumen  sin serie
 split                             
-gold_val             56          2
+gold_val             58          0
 weak_train          492         18
 weak_val             87          3
 Sin fuga entre particiones: OK
@@ -9,30 +9,30 @@ Sin fuga entre particiones: OK
 === Cortes conservados por partición
             count  mean  std   min   25%   50%   75%   max
 split                                                     
-gold_val     56.0  28.8  6.2  15.0  26.0  30.0  32.0  42.0
+gold_val     58.0  28.7  6.1  15.0  26.0  30.0  32.0  42.0
 weak_train  492.0  28.9  6.1  15.0  25.8  30.0  32.0  45.0
 weak_val     87.0  29.1  5.9  16.0  25.5  30.0  32.0  40.0
 
 === Resolución original (filas) por partición
             count   mean    std    min    25%    50%    75%     max
 split                                                              
-gold_val     56.0  497.0  147.0  256.0  384.0  512.0  640.0  1024.0
+gold_val     58.0  496.0  146.0  256.0  384.0  512.0  640.0  1024.0
 weak_train  492.0  488.0  141.0  256.0  384.0  512.0  560.0  1024.0
 weak_val     87.0  504.0  158.0  256.0  384.0  512.0  640.0  1024.0
 
 === Fabricante (%) por partición
 split    gold_val  weak_train  weak_val
 0                                      
-CANON         1.8         0.6       0.0
-GE           28.6        19.1      23.0
+CANON         1.7         0.6       0.0
+GE           27.6        19.1      23.0
 OTRO          0.0         0.6       0.0
-PHILIPS      30.4        30.9      23.0
-SIEMENS      37.5        44.3      50.6
-TOSHIBA       1.8         4.5       3.4
+PHILIPS      31.0        30.9      23.0
+SIEMENS      37.9        44.3      50.6
+TOSHIBA       1.7         4.5       3.4
 
 === Intensidad (uint8)
          mean  zeros    sat
-mean   56.560  0.143  0.005
+mean   56.656  0.143  0.005
 min    19.782  0.006  0.005
 max   113.823  0.557  0.005
 Volúmenes casi vacíos (media < 5): 0

@@ -20,10 +20,17 @@ python s04_sample_split.py    # 600 estudios estratificados + 58 dorados -> spli
 python s05_extract_images.py --view sag   # lee solo esas series del zip -> data/processed/sag
 python s05_extract_images.py --view cor   # vista coronal (ablación)
 python s05b_check_coherence.py --view sag # chequeos + mosaico reports/qa_montage_sag.png
+python s07_pack_colab.py      # colab_bundle.zip: código + datos procesados (≈1,7 GB)
 ```
-Después se sube `data/processed/` (unos cientos de MB) a Google Drive para entrenar en Colab.
-Los siguientes pasos (etiquetas débiles, muestreo, extracción y entrenamiento)
-se irán añadiendo a esta secuencia.
+
+## Entrenar (Colab Pro)
+1. Subir `colab_bundle.zip` a `MyDrive/knee/` (carpeta privada).
+2. Abrir `notebooks/train_colab.ipynb` en Colab con GPU y ejecutar todas las celdas.
+   Cada corrida (`A_base`, `B_base` y ablaciones) guarda en `MyDrive/knee/runs/<nombre>/`
+   el historial, los pesos y las predicciones sobre `weak_val` y `gold_val`.
+
+También corre local con GPU: `python train.py --arch resnet50 --out ../runs/B_base`.
+Prueba rápida en CPU (6 estudios, 2 épocas): `python train.py --smoke --arch scratch`.
 
 > No abras ni guardes los CSV de `data/meta` con Excel: cambia el separador a `;`.
 > Si ocurre, vuelve a correr `s00_extract_meta.py`.

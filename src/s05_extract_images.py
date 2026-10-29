@@ -112,7 +112,12 @@ def main():
 
     col = f"{args.view}_fs_series"
     sample = pd.read_csv(META / "sample_split.csv")
+    # Respaldo: un dorado sin serie FS usa la del mismo plano sin supresión de grasa
+    # (solo evaluación; en el informe se reporta también el AUC sin estos casos).
+    sample["fallback"] = sample[col].isna() & (sample.split == "gold_val")
+    sample.loc[sample.fallback, col] = sample.loc[sample.fallback, f"{args.view}_nofs_series"]
     sample = sample[sample[col].notna()].sort_values(["split", "StudyInstanceUID"])
+    fallback = dict(zip(sample.StudyInstanceUID, sample.fallback))
     if args.limit:
         sample = sample.head(args.limit)
     out_dir = OUT / (args.view if not args.limit else f"{args.view}_test")
@@ -139,7 +144,8 @@ def main():
             for uid, vol, meta in pool.map(work, tasks):
                 if vol is not None:
                     arrays[uid] = vol
-                rows.append(dict(StudyInstanceUID=uid, shard=shard.name, view=args.view, **meta))
+                rows.append(dict(StudyInstanceUID=uid, shard=shard.name, view=args.view,
+                                 fallback=fallback[uid], **meta))
             np.savez_compressed(shard, **arrays)
             part = pd.DataFrame(rows)
             part.to_csv(out_dir / f"shard_{k:03d}.csv", index=False)

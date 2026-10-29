@@ -36,7 +36,7 @@ Los demás detalles están en `data/meta/series_catalog.csv`, `study_catalog.csv
 3. **Representación de la imagen:** paquetes 2.5D de 3 cortes contiguos, de 224×224, normalizados por percentiles 1–99. Se guardan como `uint8` en *shards* `.npz` comprimidos.
 4. **Del corte al estudio:** se calcula un vector de 12 *logits* por corte y se agregan por estudio con **max-pooling** o **atención**. La agregación con atención también es una opción de ablación.
 5. **Particiones (sin fuga):**
-   - `gold_val`: los 58 dorados (56 con vista sagital). Se usan **solo para la evaluación final**.
+   - `gold_val`: los 58 dorados. Se usan **solo para la evaluación final**. Dos no tienen sagital FS y usan la sagital sin supresión de grasa del mismo estudio (columna `fallback`); el AUC se reporta con los 58 y con los 56.
    - `weak_train` (≈85 %) y `weak_val` (≈15 %): estudios con etiqueta débil. `weak_val` sirve para *early stopping*, elegir el umbral y comparar ablaciones.
    - El split es por estudio. El dataset no trae un ID de paciente; esto se declara como limitación.
 6. **Umbral de decisión:** se elige por etiqueta maximizando F1 en `weak_val`, y luego se reporta su precisión, recall y F1 en `gold_val`. Así los dorados no se usan para ajustar nada.
@@ -65,11 +65,11 @@ Roles sugeridos para los 5 integrantes:
 | 4 | Validación de etiquetas (`s03b`) | ✅ Hecho, con la v1 congelada. Exactitud 0,81 (**ruido 19 %**), F1 macro 0,72, κ macro 0,56, AUC macro del objetivo blando 0,81. Mejores etiquetas: ACL (F1 0,89), meniscos (0,80–0,84) y Baker (0,76). Peores: sinovitis (recall 0,44), PF OA (recall 0,48) y derrame (κ 0,31). Resultados en `reports/`. | E1, E7 | B | 28 |
 | 5 | Muestreo estratificado (`s04`) | ✅ Hecho. 600 estudios no dorados con sagital FS: 510 en `weak_train` y 90 en `weak_val`, más 58 en `gold_val`. Cupo de **≥60 positivos de alta confianza** por hallazgo y ≥15 estudios por idioma. Partición train/val con diferencia de prevalencia ≤ 3,9 pp. Lista de IDs en `splits/`. | E3, E6 | A | 28 |
 | 6 | Extracción de imágenes (`s05`) | ✅ Hecho. Lectura directa del zip, cortes ordenados por posición a lo largo de la normal, normalización por percentiles 0,5–99,5 a `uint8` y 256×256 (recorte aleatorio a 224 al entrenar). Se conservan **todos los cortes**: el plan original decía "16 centrales", pero eso perdería los meniscos, que están en los extremos de la pila sagital. Las series 3D se submuestrean a 32. Vistas sagital y coronal. Control de coherencia en `s05b`. | Datos | A | 28 |
-| 7 | Desbalance | Prevalencia débil de cada etiqueta en la muestra. Mitigación: `pos_weight` en BCE **y** pérdida focal, evaluadas de forma comparada. | E6 | D | 28 |
-| 8 | Modelo A: CNN desde cero | 4–5 bloques conv-BN-ReLU con conexiones residuales, entrada 2.5D (3 canales), 12 *logits* y agregación por estudio. | E2 | C | 28–29 |
-| 9 | Modelo B: transfer learning | ResNet-50 de ImageNet (`torchvision`) con una cabeza propia de 12 sigmoides y la misma agregación. Fine-tuning en dos etapas: 1) solo la cabeza, 2) descongelar `layer3`/`layer4` con un LR más bajo. | E2 | D | 29 |
+| 7 | Desbalance | 🟡 Prevalencias y `pos_weight` en `reports/sample_prevalence.csv`. Mitigación implementada en `train.py`: `pos_weight` (corrida `B_nopw` como línea base sin mitigación) y pérdida focal (`B_focal`). Falta evaluar. | E6 | D | 29–30 |
+| 8 | Modelo A: CNN desde cero | 🟡 Código listo (`models.py`, `train.py --arch scratch`). Mini-VGG (clase 4): 5 bloques de dos conv 3×3 + BN + ReLU + max-pool, promedio global al final (idea de GoogLeNet, clase 5) en vez de capas densas; ≈1,5 M parámetros. Entrada 2.5D (corte y vecinos como 3 canales) y atención por hallazgo sobre los cortes (MIL, Ilse 2018). | E2 | C | 29 |
+| 9 | Modelo B: transfer learning | 🟡 Código listo (`train.py --arch resnet50`). ResNet-50 de ImageNet (clase 6) con la misma entrada, atención y 12 sigmoides. Fine-tuning en dos etapas: 2 épocas solo la cabeza, luego toda la red con LR 10× menor en el backbone; BatchNorm preentrenada congelada (el lote son cortes casi iguales de un estudio). AMP, *checkpoint* por época y reanudación. | E2 | D | 29 |
 | 10 | Evaluación | AUC macro sobre 12 etiquetas (métrica oficial) y AUC por etiqueta en `gold_val`, con IC 95 % por *bootstrap* (1000 remuestreos). Precisión/recall/F1 al umbral elegido en `weak_val`. Incluir una línea base trivial que predice la prevalencia. | E3 | E | 29–30 |
-| 11 | Ablación (≥2 factores) | (a) BCE vs. pérdida focal; (b) ruido: ponderar por confianza vs. usar solo alta confianza; (c, si hay tiempo) sagital vs. coronal. Se hace con el modelo B y pocas épocas. | E4 | D | 29–30 |
+| 11 | Ablación (≥2 factores) | Corridas definidas en `notebooks/train_colab.ipynb`, todas con el modelo B: (a) BCE vs. focal (`B_focal`); (b) ruido: etiqueta dura vs. ponderar por confianza (`B_conf`) vs. solo alta confianza (`B_hc`); (c) sagital vs. coronal (`B_cor`). | E4 | D | 29–30 |
 | 12 | Grad-CAM | Implementarlo con *hooks* de PyTorch sobre `layer4` y el último bloque de la CNN. Cubrir al menos 3 hallazgos (menisco medial, ACL, derrame) usando casos dorados positivos. Comentar si la activación cae en la región anatómica correcta. | E5 | E | 30 |
 | 13 | Sesgo lingüístico | Media página basada en el desglose por idioma del paso 4: francés sin dorados, idiomas con pocos ejemplos y el efecto en un despliegue real. | E7 | B | 30 |
 | 14 | Repositorio | `run_all` con un solo comando, README, `requirements.txt`, semillas fijas y CSV de particiones versionados. | Entrega | A | 30 |
@@ -82,7 +82,7 @@ Roles sugeridos para los 5 integrantes:
 | Etapa | Dónde | Por qué |
 |---|---|---|
 | `s00`–`s05` (catálogo, etiquetas, muestreo, extracción) | Local, junto al zip | El zip de 265 GB no se puede subir. |
-| Subida | `data/processed/*.npz` (unos cientos de MB) → Google Drive | |
+| Subida | `python src/s07_pack_colab.py` → `colab_bundle.zip` (código + datos, ≈1,7 GB) → `MyDrive/knee/` privado | Un solo archivo sube más rápido y seguro que cientos. |
 | Entrenamiento, ablación, Grad-CAM | Colab Pro (GPU) | Copiar los *shards* a `/content` antes de entrenar, guardar *checkpoints* en Drive en cada época y usar `torch.autocast`. |
 
 ---
