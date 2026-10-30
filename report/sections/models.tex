@@ -1,0 +1,56 @@
+\section{Modelos}
+\label{sec:modelos}
+
+Ambos modelos comparten la entrada, la agregación y la pérdida; solo difiere el codificador
+por corte, de modo que su comparación aísla el efecto de entrenar desde cero frente a
+transferir desde ImageNet.
+
+\textbf{Entrada 2.5D y agregación.} Cada corte $d$ se apila con sus vecinos $d-1$ y $d+1$
+como tres canales: así el codificador 2D ve contexto 3D y puede reutilizar pesos de ImageNet.
+El codificador produce $h_d \in \mathbb{R}^F$ por corte. Como las etiquetas son por estudio,
+los cortes se agregan con atención con compuerta~\citep{ilse2018attention}, con \emph{una
+distribución por hallazgo} $l$:
+\begin{equation}
+  a_{d,l} = \operatorname{softmax}_d\!\big(w_l^\top[\tanh(Vh_d)\odot\sigma(Uh_d)]\big),\qquad
+  z_l = \textstyle\sum_d a_{d,l}\,h_d,\qquad
+  \hat y_l = \sigma(c_l^\top z_l + b_l).
+\end{equation}
+Cada hallazgo puede así atender a cortes distintos: un menisco a un extremo de la pila y el
+LCA al centro. La agregación es invariante al número de cortes, y $\arg\max_d a_{d,l}$
+indica qué corte mostrar con Grad-CAM. Las doce salidas son sigmoides independientes.
+
+\textbf{Modelo A (desde cero).} Cinco bloques de dos convoluciones 3$\times$3 con
+\emph{batch norm} y ReLU, seguidos de \emph{max-pooling}, con anchos 24--48--96--160--256
+(224$\to$7). Al final, un promedio global en lugar de capas densas. Son 1,56\,M parámetros,
+un tamaño acorde con 510 estudios: las capas densas de AlexNet o VGG sumarían decenas de
+millones.
+
+\textbf{Modelo B (transferencia).} ResNet-50~\citep{he2016resnet} con pesos de ImageNet, sin
+su capa final ($F=2048$), con 24,1\,M parámetros en total. El ajuste fino tiene dos etapas:
+\begin{itemize}
+  \item 3 épocas entrenando solo la cabeza;
+  \item luego \texttt{layer3} y \texttt{layer4} con tasa de aprendizaje $2\times10^{-5}$,
+        manteniendo la \emph{batch norm} congelada: cada lote son cortes casi iguales de pocos
+        estudios.
+\end{itemize}
+
+\textbf{Pérdida.} Para el hallazgo $l$ del estudio $i$ se usa entropía cruzada binaria con
+peso de positivos:
+\begin{equation}
+  \mathcal L = \frac{\sum_{i,l} w_{il}\,\big[-p_l\,y_{il}\log\hat y_{il}
+     - (1-y_{il})\log(1-\hat y_{il})\big]}{\sum_{i,l} w_{il}},
+\end{equation}
+donde $p_l$ es el \texttt{pos\_weight} y $w_{il}$ el peso por etiqueta: 1 para la etiqueta
+dura, la confianza del extractor, o $\mathbf 1[\text{conf}\ge0{,}8]$ para usar solo las de
+alta confianza. La variante focal multiplica cada término por $(1-p_t)^{2}$~\citep{lin2017focal}.
+
+\textbf{Entrenamiento.} AdamW (decaimiento $10^{-4}$) con programa \emph{one-cycle}; tasa de
+$10^{-3}$ para la cabeza y para todo A. Lotes de 4 estudios con relleno y máscara; bf16 en una
+GPU de Colab Pro, unos 3 minutos por corrida de B. Aumentos en GPU: recorte aleatorio, volteo
+horizontal, inversión del orden de los cortes (rodilla izquierda o derecha) y gamma y
+contraste leves.
+
+Se conserva la época con mejor AUC macro en \texttt{weak\_val} frente a las etiquetas
+débiles, con parada temprana tras 15 (A) u 8 (B) épocas sin mejora. El umbral de cada
+hallazgo maximiza el F1 en \texttt{weak\_val}. Los dorados no intervienen en ninguna
+decisión.

@@ -16,7 +16,7 @@ los CSV y los DICOM directamente desde el zip y extraen solo las series necesari
 pip install -r requirements.txt
 python run_all.py
 ```
-`run_all.py` ejecuta las cinco etapas en orden y se puede reanudar: si se interrumpe, al
+`run_all.py` ejecuta las etapas en orden y se puede reanudar: si se interrumpe, al
 volver a lanzarlo omite los shards ya extraídos y retoma cada corrida desde su último
 *checkpoint*.
 
@@ -27,6 +27,7 @@ volver a lanzarlo omite los shards ya extraídos y retoma cada corrida desde su 
 | `eval` | `evaluate.py`: AUC con IC, P/R/F1 y ablaciones → `reports/eval_*` | CPU, segundos |
 | `gradcam` | `gradcam.py` para B_base y A_base → `reports/gradcam/` | GPU o CPU |
 | `pack` | `colab_bundle.zip` / `colab_code.zip` para Colab (opcional) | Local |
+| `report` | Figuras del informe y compilación de `report/main.tex` (NeurIPS 2025) con `latexmk` | Local, ~1 min |
 
 Ejemplos:
 - `python run_all.py --stages data` corre solo la etapa de datos.
@@ -49,7 +50,8 @@ run_all.py            comando único
 src/                  s00–s07 (datos), models.py, train.py, evaluate.py, gradcam.py
 notebooks/            train_colab.ipynb
 splits/               IDs de estudio por partición (weak_train / weak_val / gold_val)
-reports/              validación de etiquetas, prevalencias, coherencia,
+report/               informe NeurIPS (main.tex, sections/, refs.bib)
+reports/              validación de etiquetas, prevalencias, coherencia, sesgo por idioma (e7_*),
                       v1/ (primer intento), v2/ (resultados finales)
 ```
 

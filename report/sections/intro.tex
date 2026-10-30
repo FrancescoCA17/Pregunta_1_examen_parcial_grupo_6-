@@ -1,0 +1,35 @@
+\section{Introducción}
+\label{sec:intro}
+
+La resonancia magnética (RM) es el estudio de referencia para evaluar ligamentos, meniscos,
+cartílago y hueso de la rodilla. Su lectura exige radiólogos especializados y presenta
+variabilidad entre observadores, lo que motiva sistemas de apoyo basados en aprendizaje
+profundo~\citep{bien2018mrnet}. Este trabajo aborda la clasificación multietiqueta de doce
+hallazgos (lesión del LCA y del LCM, daño del menisco medial y lateral, artrosis medial,
+lateral y patelofemoral, derrame, sinovitis, quiste de Baker, contusión ósea y fractura) en
+el conjunto RSNA Knee Abnormality Detection.
+
+La dificultad central es la supervisión. Solo 58 de los 4\,407 estudios tienen etiquetas
+doradas anotadas por radiólogos; el resto solo trae el reporte en texto libre, escrito en
+nueve idiomas por 16 centros de cinco continentes. Las etiquetas de entrenamiento deben, por
+tanto, extraerse del texto, con el ruido que eso implica. Siguiendo la reducción de escala del
+enunciado, trabajamos con una serie sagital con supresión de grasa por estudio, entrada 2.5D y
+una muestra estratificada de 600 estudios, y reservamos los 58 dorados exclusivamente para
+la evaluación final.
+
+Nuestras contribuciones son:
+\begin{itemize}
+  \item un extractor de etiquetas multilingüe basado en reglas, con negación, incertidumbre
+        y confianza, validado contra los dorados: exactitud 0,81, es decir, ruido del 19\,\%
+        (Sección~\ref{sec:datos});
+  \item dos arquitecturas 2.5D con agregación por atención por hallazgo: una CNN diseñada
+        desde cero y una ResNet-50 preentrenada; la segunda las supera con una diferencia
+        significativa en la evaluación pareada (Secciones~\ref{sec:modelos}
+        y~\ref{sec:resultados});
+  \item una evaluación con intervalos de confianza, comparación pareada, tres semillas y
+        ablaciones de pérdida, manejo del ruido, plano y profundidad reentrenada;
+  \item un análisis con Grad-CAM que muestra dónde el modelo localiza la anatomía y dónde
+        usa atajos por correlación (Sección~\ref{sec:gradcam}), y uno de sesgo por idioma
+        y centro (Sección~\ref{sec:sesgo}).
+\end{itemize}
+El código es reproducible de extremo a extremo con un solo comando (\texttt{run\_all.py}).

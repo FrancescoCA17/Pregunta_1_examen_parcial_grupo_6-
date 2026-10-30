@@ -45,33 +45,30 @@
 \maketitle
 
 \begin{abstract}
-  % TODO: resumen final (150--200 palabras) cuando estén todas las secciones.
-  Resumen pendiente.
+  Clasificamos doce hallazgos en resonancias magnéticas de rodilla (RSNA Knee Abnormality
+  Detection) sin etiquetas estructuradas de entrenamiento: las extraemos de los reportes
+  radiológicos, escritos en nueve idiomas, con reglas que detectan negación e incertidumbre y
+  asignan una confianza. Frente a los 58 estudios con etiqueta dorada, el extractor tiene una
+  exactitud de 0,81 (ruido del 19\,\%). Con 510 estudios débilmente etiquetados (una serie
+  sagital con supresión de grasa por estudio) comparamos una CNN 2.5D diseñada desde cero y
+  una ResNet-50 preentrenada, ambas con agregación por atención por hallazgo. La ResNet-50
+  alcanza una AUC macro de 0,715 [0,656--0,771] en los dorados y supera a la CNN desde cero
+  (0,654), con una diferencia pareada de $-0{,}062$ $[-0{,}114;\,-0{,}008]$. Entrenar solo con
+  etiquetas de alta confianza empeora el modelo; la pérdida focal, la ponderación por
+  confianza y el peso de positivos no cambian la AUC más allá de la variación entre semillas.
+  Grad-CAM muestra una localización plausible del derrame y la contusión, pero atajos por
+  correlación en el LCA y los meniscos. Además, la calidad del etiquetado varía por idioma y
+  está confundida con el centro y el equipo.
 \end{abstract}
 
-\section{Introducción}
-% TODO
-
-\section{Trabajos relacionados}
-% TODO
-
-\section{Datos y supervisión débil}
-% TODO
-
-\section{Modelos}
-% TODO
-
-\section{Experimentos y resultados}
-% TODO
-
-\section{Interpretabilidad con Grad-CAM}
-\label{sec:gradcam}
-% TODO
-
+\input{sections/intro}
+\input{sections/related}
+\input{sections/data}
+\input{sections/models}
+\input{sections/results}
+\input{sections/gradcam}
 \input{sections/e7_sesgo}
-
-\section{Limitaciones y conclusiones}
-% TODO
+\input{sections/conclusions}
 
 \bibliographystyle{plainnat}
 \bibliography{refs}

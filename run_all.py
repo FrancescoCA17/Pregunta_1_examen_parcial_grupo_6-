@@ -14,11 +14,13 @@ Etapas:
   train    las corridas de RUNS (modelos A y B, ablaciones y semillas) -> runs/<nombre>/.
   eval     evaluate.py sobre runs/ -> reports/eval_*.
   gradcam  gradcam.py para B_base y A_base -> reports/gradcam/.
+  report   figuras del informe y compilación de report/main.tex (plantilla NeurIPS).
 
 Todo es reanudable: la extracción omite shards existentes y cada corrida retoma desde
 runs/<nombre>/last.pt. El entrenamiento necesita GPU (en CPU es inviable).
 """
 import argparse
+import shutil
 import subprocess
 import sys
 import time
@@ -54,7 +56,7 @@ RUNS = {
     "B_seed1": ["--arch", "resnet50", "--seed", "1"],
     "B_seed2": ["--arch", "resnet50", "--seed", "2"],
 }
-STAGES = ["data", "pack", "train", "eval", "gradcam"]
+STAGES = ["data", "pack", "train", "eval", "gradcam", "report"]
 
 
 def run(cmd, dry):
@@ -69,7 +71,7 @@ def run(cmd, dry):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--stages", default="data,train,eval,gradcam",
+    ap.add_argument("--stages", default="data,train,eval,gradcam,report",
                     help=f"lista separada por comas de {STAGES}")
     ap.add_argument("--runs", nargs="+", default=list(RUNS), choices=list(RUNS))
     ap.add_argument("--runs-dir", default=str(ROOT / "runs"))
@@ -100,6 +102,15 @@ def main():
     if "gradcam" in stages:
         for name in ("B_base", "A_base"):
             run(["gradcam.py", "--run", str(runs_dir / name)], a.dry_run)
+    if "report" in stages:
+        run(["report_figures.py"], a.dry_run)
+        latexmk = ["latexmk", "-pdf", "-interaction=nonstopmode", "main.tex"]
+        print(f"\n$ (report/) {' '.join(latexmk)}", flush=True)
+        if not a.dry_run:
+            if shutil.which("latexmk"):
+                subprocess.run(latexmk, cwd=ROOT / "report", check=True)
+            else:
+                print("  latexmk no está instalado: compila report/main.tex en Overleaf.")
     print("\nListo.")
 
 

@@ -1,0 +1,35 @@
+\section{Limitaciones y conclusiones}
+\label{sec:conclusiones}
+
+\textbf{Limitaciones.}
+\begin{itemize}
+  \item \textbf{Validación pequeña.} Con 58 dorados, los IC de la AUC macro miden unos
+        $\pm0{,}06$, y los de cada hallazgo, más del doble. Por eso la mayoría de las
+        ablaciones no es concluyente.
+  \item \textbf{Techo del texto.} El techo lo pone la supervisión: el extractor tiene un 19\,\%
+        de ruido, y en sinovitis y derrame el texto no recoge lo que se ve en la imagen.
+  \item \textbf{Una sola vista y resolución gruesa.} Usamos una sola vista y mapas de
+        7$\times$7, insuficientes para estructuras finas como los meniscos.
+  \item \textbf{Umbral trasladado.} El umbral elegido en datos débiles se traslada mal a los
+        dorados, que están enriquecidos.
+  \item \textbf{Particiones.} El conjunto no trae identificadores de paciente, así que las
+        particiones son por estudio.
+  \item \textbf{Asignación de idioma.} El idioma, detectado automáticamente, es un proxy
+        imperfecto del centro.
+\end{itemize}
+
+\textbf{Conclusiones.} Es posible entrenar un clasificador de doce hallazgos en RM de rodilla
+sin etiquetas estructuradas, a partir de reportes en nueve idiomas.
+\begin{itemize}
+  \item La transferencia desde ImageNet supera a una CNN desde cero (0,715 frente a 0,654),
+        siempre que el ajuste fino use una tasa de aprendizaje baja. Con tasa alta, el modelo
+        colapsa a un predictor constante.
+  \item Frente al ruido de las etiquetas, conservar toda la supervisión con parada temprana
+        es mejor que descartar las etiquetas dudosas.
+  \item Grad-CAM y el análisis por idioma muestran riesgos que la AUC macro oculta: atajos
+        por correlación en el LCA y los meniscos, y una calidad de etiquetado desigual entre
+        centros.
+\end{itemize}
+Como trabajo futuro proponemos fusionar las vistas sagital y coronal, recortar centrado en la
+articulación para ganar resolución, sustituir las reglas por embeddings multilingües o un
+modelo de lenguaje, y validar por centro antes de cualquier despliegue.

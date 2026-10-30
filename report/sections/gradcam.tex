@@ -1,0 +1,54 @@
+\section{Interpretabilidad con Grad-CAM}
+\label{sec:gradcam}
+
+\textbf{Método (entregable 5).} Grad-CAM~\citep{selvaraju2017gradcam} se calcula así:
+\begin{itemize}
+  \item se toma el corte de mayor atención del hallazgo, $\arg\max_d a_{d,l}$;
+  \item se usan los mapas de activación $A^k$ de \texttt{layer4} en B (7$\times$7) o de la
+        última ReLU antes del \emph{pooling} en A (14$\times$14);
+  \item se pondera cada mapa por el gradiente medio del \emph{logit} del hallazgo,
+        $\mathrm{ReLU}(\sum_k \alpha_k A^k)$;
+  \item el mapa se interpola a 224$\times$224 y se superpone al corte.
+\end{itemize}
+El estudio completo pasa por la red, así que la atención participa en el gradiente. Para
+cinco hallazgos mostramos los tres dorados positivos con mayor probabilidad y el falso
+positivo más seguro. La Figura~\ref{fig:gradcam} muestra un acierto por hallazgo.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/gradcam_B.png}
+  \caption{Grad-CAM del modelo B en un dorado positivo por hallazgo, en el corte elegido por
+    la atención. Fila superior: corte sagital; fila inferior: mapa superpuesto. El derrame
+    (líquido suprapatelar) y la contusión (edema en el cóndilo femoral) se localizan bien. En
+    el LCA el mapa cae sobre el derrame y no sobre el ligamento; en el menisco medial, la
+    atención elige un corte periférico, fuera de la articulación.}
+  \label{fig:gradcam}
+\end{figure}
+
+\textbf{Resultados en B.} Revisamos visualmente 20 casos de B, cuatro por hallazgo:
+\begin{itemize}
+  \item \textbf{Plausible: derrame y contusión.} En los tres aciertos de derrame el calor
+        cubre la colección de líquido del receso suprapatelar. En contusión cae dentro del
+        cóndilo femoral, sobre el edema óseo moteado.
+  \item \textbf{Signos secundarios: LCA.} El calor nunca está en la escotadura intercondílea.
+        Los cortes elegidos son laterales y el mapa cae sobre el derrame o el hueso anterior,
+        dos signos que acompañan a la rotura: entre los dorados, el 75\,\% de las roturas del
+        LCA tienen derrame, frente al 60\,\% global.
+  \item \textbf{No plausible: meniscos.} Los mapas no caen sobre el menisco. En el medial,
+        los cuatro casos eligen cortes del extremo de la pila (3/24, 3/30, 30/33 y 31/35),
+        que muestran grasa y músculo.
+\end{itemize}
+
+\textbf{Atención por corte.} En los 58 dorados, la atención para el LCA cae en el tercio
+central de la pila solo en el 2\,\% de los casos, aunque el ligamento está en el centro. Los
+dos meniscos se atienden en extremos opuestos solo en el 43\,\% de los casos, cerca del azar.
+
+El modelo A, en cambio, concentra la atención en el centro para casi todos los hallazgos
+(LCA 67\,\%, fractura 79\,\%), con mapas casi idénticos entre hallazgos del mismo estudio:
+aprendió un detector genérico de ``rodilla anormal''.
+
+\textbf{Lectura.} B es anatómicamente coherente en los hallazgos que más resaltan en una
+secuencia sensible a líquido, y son también aquellos en que mejor rinde. En estructuras finas
+falla: un menisco ocupa menos de una celda del mapa de 7$\times$7. Allí el modelo recurre a
+correlaciones. Clínicamente, un detector de rotura del LCA que se apoya en el derrame
+fallaría ante una rotura sin derrame, un riesgo que la AUC de 0,71 no deja ver.

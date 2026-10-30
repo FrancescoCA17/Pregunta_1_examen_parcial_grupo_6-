@@ -1,0 +1,28 @@
+\section{Trabajos relacionados}
+\label{sec:related}
+
+\textbf{Aprendizaje profundo en RM de rodilla.} MRNet~\citep{bien2018mrnet} clasifica
+1\,370 estudios en anormalidad, rotura del LCA y rotura meniscal. Aplica una AlexNet
+preentrenada a cada corte, agrega los cortes por \emph{max-pooling} y combina los tres planos
+con una regresión logística. Nuestro enfoque comparte la idea de un codificador 2D por corte,
+pero reemplaza el \emph{max-pooling} por atención por hallazgo~\citep{ilse2018attention} y
+aprende doce etiquetas a partir de supervisión débil.
+
+\textbf{Supervisión débil a partir de reportes.} NegEx~\citep{chapman2001negex} detecta
+hallazgos negados con ventanas de disparadores. El etiquetador de CheXpert~\citep{irvin2019chexpert}
+extiende la idea a menciones inciertas y compara las políticas U-ones y U-zeros para
+tratarlas. Snorkel~\citep{ratner2017snorkel} formaliza la combinación de funciones de
+etiquetado ruidosas. Aquí adaptamos estas ideas a nueve idiomas y añadimos una confianza
+por tipo de evidencia.
+
+\textbf{Arquitecturas y entrenamiento.} La CNN desde cero sigue los bloques 3$\times$3
+apilados de VGG~\citep{simonyan2015vgg} y el promedio global de GoogLeNet~\citep{szegedy2015going}.
+El modelo transferido usa ResNet-50~\citep{he2016resnet}. Para el desbalance comparamos la
+ponderación de positivos con la pérdida focal~\citep{lin2017focal}. Con etiquetas ruidosas,
+las redes aprenden primero los patrones generales y después memorizan el
+ruido~\citep{arpit2017closer}, lo que motiva la parada temprana.
+
+\textbf{Interpretabilidad y atajos.} Grad-CAM~\citep{selvaraju2017gradcam} localiza las
+regiones que influyen en cada predicción. En imagen médica, los modelos pueden explotar
+señales del hospital o del equipo en lugar de la patología~\citep{zech2018variable}, y las
+métricas agregadas pueden ocultar subgrupos con fallos graves~\citep{oakden2020hidden}.
