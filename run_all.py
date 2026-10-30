@@ -8,7 +8,8 @@
 Etapas:
   data     s00–s05b: CSV del zip, catálogo, selección de series, etiquetas débiles y su
            validación contra los 58 dorados, muestreo estratificado, extracción de
-           imágenes (sagital y coronal) y chequeos de coherencia.
+           imágenes (sagital y coronal), chequeos de coherencia y análisis de sesgo
+           por idioma (entregable 7).
   pack     s07: colab_bundle.zip / colab_code.zip para entrenar en Colab (opcional).
   train    las corridas de RUNS (modelos A y B, ablaciones y semillas) -> runs/<nombre>/.
   eval     evaluate.py sobre runs/ -> reports/eval_*.
@@ -37,6 +38,7 @@ DATA = [
     ["s05_extract_images.py", "--view", "cor"],
     ["s05b_check_coherence.py", "--view", "sag"],
     ["s05b_check_coherence.py", "--view", "cor"],
+    ["e7_language_bias.py"],
 ]
 
 # Cada ablación cambia UN factor frente a B_base (ver reports/v2/README.md)

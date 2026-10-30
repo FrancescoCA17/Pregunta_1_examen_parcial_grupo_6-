@@ -1,0 +1,79 @@
+\documentclass{article}
+
+% Plantilla oficial NeurIPS 2025; "preprint" quita el anonimato y los números de línea.
+\usepackage[preprint]{neurips_2025}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands,es-tabla]{babel}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{siunitx}
+\sisetup{output-decimal-marker={,}, group-separator={\,}}
+
+% Pie de la primera página: contexto del curso en lugar de "Preprint."
+\makeatletter
+\renewcommand{\@noticestring}{Examen Parcial de Redes Neuronales y Aprendizaje Profundo,
+  UNI--FIIS, 2026-II. Pregunta 1, Grupo 6.}
+\makeatother
+
+\title{Clasificación multietiqueta de anomalías de rodilla en resonancia magnética
+  con CNN y supervisión débil multilingüe}
+
+\author{%
+  Juan Sebastian Francesco Contreras Avendaño\\
+  \texttt{20266818J} \\
+  \And
+  Junior Romero Lovera \\
+  \And
+  Luis Muñoz Cañabe \\
+  \And
+  Derly Raúl Oha Quispe \\
+  \And
+  Lourdes Pedraza Palomino \\
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+  % TODO: resumen final (150--200 palabras) cuando estén todas las secciones.
+  Resumen pendiente.
+\end{abstract}
+
+\section{Introducción}
+% TODO
+
+\section{Trabajos relacionados}
+% TODO
+
+\section{Datos y supervisión débil}
+% TODO
+
+\section{Modelos}
+% TODO
+
+\section{Experimentos y resultados}
+% TODO
+
+\section{Interpretabilidad con Grad-CAM}
+\label{sec:gradcam}
+% TODO
+
+\input{sections/e7_sesgo}
+
+\section{Limitaciones y conclusiones}
+% TODO
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\end{document}

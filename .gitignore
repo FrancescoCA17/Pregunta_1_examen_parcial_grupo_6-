@@ -9,3 +9,17 @@ __pycache__/
 reports/**/*.png
 # Corridas de entrenamiento (pesos y predicciones)
 runs/
+
+# LaTeX: archivos intermedios
+report/*.aux
+report/*.log
+report/*.fls
+report/*.fdb_latexmk
+report/*.out
+report/*.bbl
+report/*.blg
+report/*.synctex.gz
+report/main.pdf
+report/build.log
+# figuras con imágenes derivadas de Kaggle
+report/figures/*.png

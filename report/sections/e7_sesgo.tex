@@ -1,0 +1,64 @@
+% Entregable 7: sesgo lingüístico y geográfico. Cifras: src/e7_language_bias.py -> reports/e7_*.
+\section{Sesgo lingüístico y geográfico}
+\label{sec:sesgo}
+
+Los reportes provienen de 16 centros en cinco continentes, y el idioma funciona como proxy
+del centro de origen. Sobre los 4\,407 estudios, \texttt{langdetect} identificó nueve
+idiomas (el enunciado menciona unos doce; los reportes muy breves o mixtos pueden quedar mal
+asignados). La Tabla~\ref{tab:idiomas} muestra que el sesgo aparece en tres niveles.
+
+\textbf{Representación y validación.} El inglés concentra el 39\,\% de los estudios y 28 de
+los 58 dorados. El francés no tiene ningún dorado, de modo que su etiquetador nunca se
+validó. El alemán, el neerlandés, el griego y el búlgaro tienen solo 2--3 dorados cada uno.
+
+\textbf{Calidad de la extracción.} El acuerdo con los dorados va de 0,85 en español a 0,64
+en griego, con intervalos que no se solapan; en griego, la morfología y la sigma final ya
+obligaron a corregir reglas durante el desarrollo. La diferencia inglés--resto
+(+0,033; IC 95\,\% $[-0{,}024;\,+0{,}094]$) no es concluyente con 58 estudios. Las
+convenciones de redacción también cambian la etiqueta aunque la imagen sea la misma: el
+41\,\% de los reportes en español tiene menos de 300 caracteres (lo no mencionado se
+etiqueta como ausente), la sinovitis figura en el 17\,\% de los reportes en inglés y en
+menos del 2\,\% de los búlgaros y croatas, y el derrame va del 34\,\% (español) al 73\,\%
+(francés). Parte de esa variación puede ser prevalencia real, pero el texto no permite
+separarla del estilo de cada centro.
+
+\textbf{Idioma, centro y equipo están confundidos.} Los estudios en búlgaro son 100\,\%
+Philips; los alemanes, griegos, franceses y neerlandeses, 100\,\% Siemens; los turcos, 48\,\%
+GE. Un modelo de imagen puede así asociar la ``firma'' del resonador con la tasa de
+etiquetas de ese centro, el atajo descrito por \citet{zech2018variable}, sin aprender el
+hallazgo. Grad-CAM (Sección~\ref{sec:gradcam}) ya mostró atajos por correlación en el LCA.
+
+\textbf{Implicancias clínicas.} El error del modelo no sería uniforme. En centros cuyo
+idioma tiene peor extracción o reportes más escuetos habría más falsos negativos, una forma
+de estratificación oculta~\citep{oakden2020hidden} que la AUC macro no revela. Un
+despliegue real necesitaría (i) un conjunto dorado por idioma o centro antes de usar el
+modelo, (ii) calibrar el umbral localmente, porque las prevalencias difieren, y (iii) vigilar
+el desempeño por sitio después de ponerlo en uso. Esto incluye a un hospital peruano: aunque
+el español está bien representado, su terminología y su equipamiento podrían diferir de los
+centros de entrenamiento.
+
+\begin{table}[t]
+  \caption{Sesgo por idioma del reporte. \emph{Acuerdo}: exactitud de la etiqueta débil
+    frente a la dorada (pares estudio$\times$etiqueta; IC 95\,\% por bootstrap de
+    estudios). \emph{Corto}: reportes con menos de 300 caracteres. \emph{Sinov.}: reportes
+    con sinovitis positiva. Población no dorada para las dos últimas columnas.}
+  \label{tab:idiomas}
+  \centering
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{lrrccrrl}
+    \toprule
+    Idioma & Estudios & \% & Dorados & Acuerdo [IC 95\,\%] & Corto (\%) & Sinov. (\%) & Fabricante \\
+    \midrule
+    Inglés     & 1\,736 & 39,4 & 28 & 0,83 [0,79--0,87] &  7,8 & 17,4 & mixto \\
+    Español    &    682 & 15,5 & 10 & 0,85 [0,81--0,90] & 41,2 & 14,6 & Philips 47\,\% \\
+    Turco      &    546 & 12,4 &  6 & 0,81 [0,71--0,89] &  7,8 &  4,6 & GE 48\,\% \\
+    Croata     &    406 &  9,2 &  4 & 0,75 [0,69--0,81] &  0,0 &  1,5 & Siemens 68\,\% \\
+    Griego     &    321 &  7,3 &  3 & 0,64 [0,58--0,67] &  0,0 &  8,8 & Siemens 100\,\% \\
+    Alemán     &    262 &  5,9 &  2 & 0,75 [0,67--0,83] &  1,5 & 12,3 & Siemens 100\,\% \\
+    Búlgaro    &    220 &  5,0 &  3 & 0,83 [0,75--0,92] &  0,9 &  0,5 & Philips 100\,\% \\
+    Neerlandés &    153 &  3,5 &  2 & 0,79 [0,75--0,83] &  2,6 &  3,3 & Siemens 100\,\% \\
+    Francés    &     81 &  1,8 &  0 & sin validar       &  0,0 & 11,1 & Siemens 100\,\% \\
+    \bottomrule
+  \end{tabular}
+\end{table}
