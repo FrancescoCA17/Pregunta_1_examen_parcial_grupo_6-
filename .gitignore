@@ -6,6 +6,6 @@ checkpoints/
 __pycache__/
 .ipynb_checkpoints/
 # Imágenes derivadas del dataset (no redistribuibles)
-reports/*.png
+reports/**/*.png
 # Corridas de entrenamiento (pesos y predicciones)
 runs/

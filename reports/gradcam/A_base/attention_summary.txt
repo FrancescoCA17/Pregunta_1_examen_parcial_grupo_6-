@@ -1,0 +1,16 @@
+Atención a nivel de corte en gold_val (58 estudios, A_base)
+Meniscos medial y lateral atendidos en extremos opuestos de la pila: 31%
+
+           label  mediana_pos  mediana_dist_centro  en_tercio_central
+             ACL         0.48                 0.11               0.67
+             MCL         0.52                 0.09               0.78
+ Medial Meniscus         0.59                 0.31               0.22
+Lateral Meniscus         0.54                 0.07               0.81
+       Medial OA         0.73                 0.39               0.10
+      Lateral OA         0.59                 0.32               0.24
+           PF OA         0.36                 0.33               0.19
+        Effusion         0.73                 0.42               0.02
+       Synovitis         0.18                 0.45               0.00
+         Baker's         0.52                 0.11               0.67
+       Contusion         0.48                 0.11               0.59
+        Fracture         0.53                 0.07               0.79

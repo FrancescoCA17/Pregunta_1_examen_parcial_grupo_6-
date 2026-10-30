@@ -49,13 +49,17 @@ def get_args(argv=None):
     ap.add_argument("--noise", choices=["hard", "conf", "hc"], default="hard")
     ap.add_argument("--no-pos-weight", action="store_true")
     ap.add_argument("--pool", choices=["attn", "max"], default="attn")
-    ap.add_argument("--epochs", type=int, default=0, help="0 = 30 para A, 15 para B")
-    ap.add_argument("--freeze-epochs", type=int, default=2, help="B: épocas solo con la cabeza")
+    ap.add_argument("--epochs", type=int, default=0, help="0 = 60 para A, 20 para B")
+    ap.add_argument("--freeze-epochs", type=int, default=3, help="B: épocas solo con la cabeza")
+    ap.add_argument("--unfreeze", choices=["layer34", "all"], default="layer34",
+                    help="B: bloques que se reentrenan después de las épocas congeladas")
     ap.add_argument("--batch", type=int, default=4, help="estudios por paso")
     ap.add_argument("--lr", type=float, default=1e-3, help="cabeza (y todo A)")
-    ap.add_argument("--lr-backbone", type=float, default=1e-4)
-    ap.add_argument("--patience", type=int, default=0, help="0 = 10 para A (aprende más lento), 6 para B")
+    ap.add_argument("--lr-backbone", type=float, default=2e-5)
+    ap.add_argument("--patience", type=int, default=0, help="0 = 15 para A (aprende más lento), 8 para B")
     ap.add_argument("--workers", type=int, default=2)
+    ap.add_argument("--precision", choices=["auto", "fp32", "bf16", "fp16"], default="auto",
+                    help="auto = bf16 si la GPU lo soporta, si no fp16; en CPU fp32")
     ap.add_argument("--seed", type=int, default=SEED)
     ap.add_argument("--out", default="")
     ap.add_argument("--resume", action="store_true")
@@ -63,8 +67,8 @@ def get_args(argv=None):
     a = ap.parse_args(argv)
     if a.smoke:
         a.epochs, a.freeze_epochs, a.batch, a.workers = a.epochs or 2, 1, 2, 0
-    a.epochs = a.epochs or (30 if a.arch == "scratch" else 15)
-    a.patience = a.patience or (10 if a.arch == "scratch" else 6)
+    a.epochs = a.epochs or (60 if a.arch == "scratch" else 20)
+    a.patience = a.patience or (15 if a.arch == "scratch" else 8)
     if not a.out:
         a.out = str(ROOT / "runs" / ("smoke_" + a.arch if a.smoke else
                                     f"{a.arch}_{a.view}_{a.loss}_{a.noise}_{a.pool}"
@@ -162,14 +166,20 @@ def macro_auc(y, p):
 
 
 # ---------------------------------------------------------------- entrenamiento
-def set_train(model, arch, backbone_frozen):
+def set_train(model, arch, backbone_frozen, unfreeze="layer34"):
+    """B: BN preentrenada congelada (el lote son cortes casi iguales de un estudio) y,
+    tras las épocas solo-cabeza, se reentrenan layer3/layer4 (o todo con unfreeze="all").
+    v1 reentrenaba toda la red con LR 1e-4: la AUC en weak_val cayó de 0,71 a 0,54 al
+    descongelar y la pérdida volvió al nivel de un predictor constante."""
     model.train()
     if arch == "resnet50":
-        for m in model.encoder.modules():   # BN preentrenada congelada: el lote son
-            if isinstance(m, nn.BatchNorm2d):  # cortes muy parecidos del mismo estudio
+        for m in model.encoder.modules():
+            if isinstance(m, nn.BatchNorm2d):
                 m.eval()
         for n, p in model.encoder.named_parameters():
-            p.requires_grad = not backbone_frozen and ".bn" not in n and "downsample.1" not in n
+            stage_ok = unfreeze == "all" or n.startswith(("net.layer3", "net.layer4"))
+            p.requires_grad = (not backbone_frozen and stage_ok
+                               and ".bn" not in n and "downsample.1" not in n)
 
 
 @torch.no_grad()
@@ -198,10 +208,9 @@ def main(argv=None):
     a = get_args(argv)
     torch.manual_seed(a.seed); np.random.seed(a.seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    amp = None
-    if device.type == "cuda":
+    amp = {"fp32": None, "bf16": torch.bfloat16, "fp16": torch.float16}.get(a.precision)
+    if a.precision == "auto" and device.type == "cuda":
         amp = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
-        torch.backends.cudnn.benchmark = True
     out = Path(a.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
     (out / "config.json").write_text(json.dumps(vars(a), indent=2))
@@ -213,6 +222,12 @@ def main(argv=None):
                                          shuffle=s == "weak_train", collate_fn=collate,
                                          num_workers=a.workers, pin_memory=device.type == "cuda")
           for s, d in ds.items()}
+    # monitor de ajuste: AUC en un subconjunto fijo de entrenamiento, sin aumentos.
+    # Si queda cerca de 0,5 el modelo no está aprendiendo (subajuste), no es ruido de validación.
+    mon = parts["weak_train"].sample(min(90, len(parts["weak_train"])), random_state=a.seed)
+    ds["train_mon"] = Studies(mon.reset_index(drop=True), vols)
+    dl["train_mon"] = torch.utils.data.DataLoader(ds["train_mon"], batch_size=1, collate_fn=collate,
+                                                  num_workers=a.workers)
     y_tr = ds["weak_train"].y
     pw = None if a.no_pos_weight else torch.tensor(
         (len(y_tr) - y_tr.sum(0)) / np.maximum(y_tr.sum(0), 1), device=device)
@@ -240,7 +255,8 @@ def main(argv=None):
 
     for ep in range(start, a.epochs):
         t0 = time.time()
-        set_train(model, a.arch, backbone_frozen=a.arch == "resnet50" and ep < a.freeze_epochs)
+        set_train(model, a.arch, backbone_frozen=a.arch == "resnet50" and ep < a.freeze_epochs,
+                  unfreeze=a.unfreeze)
         tot, n = 0.0, 0
         for x, mask, y, w, _ in dl["weak_train"]:
             x, mask = augment(x.to(device, non_blocking=True), mask.to(device), train=True)
@@ -259,9 +275,12 @@ def main(argv=None):
 
         probs, _, idx = predict(model, dl["weak_val"], device, amp)
         auc = macro_auc(ds["weak_val"].y[idx], probs)
-        history.append(dict(epoch=ep, train_loss=tot / n, val_auc_weak=auc, sec=round(time.time() - t0)))
-        print(f"época {ep:2d} | pérdida {tot / n:.4f} | AUC weak_val {auc:.4f} | {time.time() - t0:.0f}s",
-              flush=True)
+        p_tr, _, i_tr = predict(model, dl["train_mon"], device, amp)
+        auc_tr = macro_auc(ds["train_mon"].y[i_tr], p_tr)
+        history.append(dict(epoch=ep, train_loss=tot / n, train_auc_weak=auc_tr, val_auc_weak=auc,
+                            sec=round(time.time() - t0)))
+        print(f"época {ep:2d} | pérdida {tot / n:.4f} | AUC train {auc_tr:.4f} | AUC weak_val {auc:.4f} | "
+              f"{time.time() - t0:.0f}s", flush=True)
         score = -np.inf if np.isnan(auc) else auc
         if score > best or not (out / "best.pt").exists():
             best = score
